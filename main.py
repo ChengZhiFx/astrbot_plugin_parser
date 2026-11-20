@@ -14,6 +14,8 @@ from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
     AiocqhttpMessageEvent,
 )
 
+from astrbot.core.star.filter.command import CommandFilter
+
 from .core.arbiter import ArbiterContext, EmojiLikeArbiter
 from .core.clean import CacheCleaner
 from .core.config import PluginConfig
@@ -114,6 +116,14 @@ class ParserPlugin(Star):
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def on_message(self, event: AstrMessageEvent):
         """消息的统一入口"""
+        if event.get_extra("_qq_media_ready"):
+            return
+        if any(
+            isinstance(handler_filter, CommandFilter)
+            for handler in (event.get_extra("activated_handlers") or ())
+            for handler_filter in handler.event_filters
+        ):
+            return
         umo = event.unified_msg_origin
 
         # 白名单
